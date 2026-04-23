@@ -39,13 +39,13 @@ public:
 
     // Constructors
     DynamicArray(const T *items, int count);
-    DynamicArray(int size);
     DynamicArray(const DynamicArray<T>& dynamicArray);
+    DynamicArray(int size);
 
     // Destructor
     ~DynamicArray();
 
-    // Decomposition (Исправлены имена на GetSize и Get для совместимости)
+    // Decomposition
     const T& Get(int index) const;
     int GetSize() const;
 
