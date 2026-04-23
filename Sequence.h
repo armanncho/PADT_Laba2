@@ -12,7 +12,6 @@ public:
     // Деструктор
     virtual ~Sequence() = default;
 
-    // Служебные методы (реализуются в ArraySequence и ListSequence)
     virtual IEnumerator<T>* GetEnumerator() const override = 0;
     virtual Sequence<T>* Instance() = 0;
     virtual Sequence<T>* CreateEmptySequence() const = 0;

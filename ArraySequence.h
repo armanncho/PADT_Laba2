@@ -15,10 +15,12 @@ public:
     ArraySequence();
     ArraySequence(const T* items_arr, int count);
     ArraySequence(const ArraySequence<T>& other);
+
     ~ArraySequence() override;
 
     Sequence<T>* Instance() override;
     Sequence<T>* CreateEmptySequence() const override;
+
     IEnumerator<T>* GetEnumerator() const override;
 
     const T& GetFirst() const override;
@@ -64,11 +66,10 @@ Sequence<T>* ArraySequence<T>::CreateEmptySequence() const {
     return new ArraySequence<T>();
 }
 
-template <class T>
+template<class T>
 IEnumerator<T>* ArraySequence<T>::GetEnumerator() const {
-    return new ArrayEnumerator<T>(this->items);
+    return new typename DynamicArray<T>::ArrayEnumerator(this->items);
 }
-
 
 template <class T>
 const T& ArraySequence<T>::GetFirst() const {

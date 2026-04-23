@@ -64,9 +64,9 @@ Sequence<T>* ListSequence<T>::CreateEmptySequence() const {
     return new ListSequence<T>();
 }
 
-template <class T>
-IEnumerator<T>* ListSequence<T>::GetEnumerator() const {
-    return new ListEnumerator<T>(this->items);
+template<class T>
+IEnumerator<T> *ListSequence<T>::GetEnumerator() const {
+    return new typename LinkedList<T>::ListEnumerator(this->items->GetHead());
 }
 
 template <class T>
