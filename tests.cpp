@@ -1,192 +1,231 @@
-#ifndef LABA2_TESTS_H
-#define LABA2_TESTS_H
-
 #include <iostream>
 #include <cassert>
+#include <stdexcept>
 
-#include "DynamicArray.h"
-#include "LinkedList.h"
-#include "mutableArraySequence.h"
-#include "immutableArraySequence.h"
-#include "mutableListSequence.h"
-#include "immutableListSequence.h"
+#include "ImmutableArraySequence.h"
+#include "MutableArraySequence.h"
+#include "ImmutableListSequence.h"
+#include "MutableListSequence.h"
 #include "Option.h"
 
-// ==========================================
-// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ MAP / WHERE
-// ==========================================
-inline int test_multiply(const int& x) { return x * 2; }
-inline bool test_is_even(const int& x) { return x % 2 == 0; }
-inline int test_sum(const int& a, const int& b) { return a + b; }
+/*============================================================================
+ * 1. ТЕСТЫ ДЛЯ IMMUTABLE ARRAY SEQUENCE
+ *============================================================================*/
 
+void TestImmutableArrayAppend() {
+    ImmutableArraySequence<int> seq;
+    Sequence<int>* s1 = seq.Append(1);
 
+    assert(seq.GetLength() == 0); // Проверка иммутабельности
+    assert(s1->GetLength() == 1);
+    assert(s1->Get(0) == 1);
 
-// ==========================================
-// 1. ТЕСТЫ БАЗОВОГО МАССИВА
-// ==========================================
-inline void test_dynamic_array()
-{
-    int initial_data[] = {10, 20, 30};
-    DynamicArray<int> arr(initial_data, 3);
-
-    assert(arr.get_size() == 3);
-    assert(arr.get(0) == 10);
-    assert(arr.get(2) == 30);
-
-    arr.set(99, 1);
-    assert(arr.get(1) == 99);
-
-    arr.resize(5);
-    assert(arr.get_size() == 5);
-    assert(arr.get(0) == 10);
-
-    std::cout << "[OK] DynamicArray tests passed.\n";
+    delete s1;
+    std::cout << "[OK] ImmutableArray: Append" << std::endl;
 }
 
+void TestImmutableArrayPrepend() {
+    ImmutableArraySequence<int> seq;
+    Sequence<int>* s1 = seq.Append(2);
+    Sequence<int>* s2 = s1->Prepend(1);
 
+    assert(s1->Get(0) == 2);
+    assert(s2->Get(0) == 1);
+    assert(s2->Get(1) == 2);
 
-// ==========================================
-// 2. ТЕСТЫ ТИПА OPTION И TRY-СЕМАНТИКИ
-// ==========================================
-inline void test_option()
-{
-    // Тест 1: Пустой Option (None)
-    Option<int> emptyOpt;
-    assert(emptyOpt.HasValue() == false);
+    delete s1;
+    delete s2;
+    std::cout << "[OK] ImmutableArray: Prepend" << std::endl;
+}
 
-    // Проверка, что при попытке взять значение из пустого Option выбрасывается ошибка
-    bool caught_error = false;
-    try
-    {
-        emptyOpt.GetValue();
+void TestImmutableArrayInsertAt() {
+    ImmutableArraySequence<int> seq;
+    Sequence<int>* s1 = seq.Append(1);
+    Sequence<int>* s2 = s1->Append(3);
+    Sequence<int>* s3 = s2->InsertAt(2, 1);
+
+    assert(s2->GetLength() == 2);
+    assert(s3->Get(0) == 1);
+    assert(s3->Get(1) == 2);
+    assert(s3->Get(2) == 3);
+
+    delete s1; delete s2; delete s3;
+    std::cout << "[OK] ImmutableArray: InsertAt" << std::endl;
+}
+
+void TestImmutableArrayRemoveAt() {
+    ImmutableArraySequence<int> seq;
+    Sequence<int>* s1 = seq.Append(1);
+    Sequence<int>* s2 = s1->Append(2);
+    Sequence<int>* s3 = s2->Append(3);
+    Sequence<int>* result = s3->RemoveAt(1);
+
+    assert(s3->GetLength() == 3);
+    assert(result->GetLength() == 2);
+    assert(result->Get(0) == 1);
+    assert(result->Get(1) == 3);
+
+    delete s1; delete s2; delete s3; delete result;
+    std::cout << "[OK] ImmutableArray: RemoveAt" << std::endl;
+}
+
+/*============================================================================
+ * 2. ТЕСТЫ ДЛЯ MUTABLE ARRAY SEQUENCE
+ *============================================================================*/
+
+void TestMutableArrayOperations() {
+    MutableArraySequence<int> seq;
+
+    seq.Append(1);
+    seq.Append(2);
+    seq.Append(3);
+    assert(seq.GetLength() == 3);
+    assert(seq.Get(1) == 2);
+
+    seq.Prepend(0);
+    assert(seq.Get(0) == 0);
+    assert(seq.GetLength() == 4);
+
+    seq.InsertAt(99, 2);
+    assert(seq.Get(2) == 99);
+
+    seq.RemoveAt(2);
+    assert(seq.Get(2) == 2);
+
+    assert(seq.GetFirst() == 0);
+    assert(seq.GetLast() == 3);
+
+    std::cout << "[OK] MutableArray: Core Operations" << std::endl;
+}
+
+/*============================================================================
+ * 3. ТЕСТЫ ДЛЯ IMMUTABLE LIST SEQUENCE
+ *============================================================================*/
+
+void TestImmutableListFunctional() {
+    ImmutableListSequence<int> seq;
+    Sequence<int>* s1 = seq.Append(1);
+    Sequence<int>* s2 = s1->Append(2);
+    Sequence<int>* s3 = s2->Append(3);
+
+    // Тест Map
+    auto func = [](const int& x) { return x * 2; };
+    Sequence<int>* mapped = s3->Map(func);
+    assert(mapped->Get(0) == 2);
+    assert(mapped->Get(2) == 6);
+
+    // Тест Where
+    auto pred = [](const int& x) { return x % 2 != 0; };
+    Sequence<int>* filtered = s3->Where(pred);
+    assert(filtered->GetLength() == 2);
+    assert(filtered->Get(0) == 1);
+    assert(filtered->Get(1) == 3);
+
+    // Тест Reduce
+    auto sum = [](const int& a, const int& b) { return a + b; };
+    int total = s3->Reduce(sum, 0);
+    assert(total == 6);
+
+    delete s1; delete s2; delete s3; delete mapped; delete filtered;
+    std::cout << "[OK] ImmutableList: Functional (Map/Where/Reduce)" << std::endl;
+}
+
+/*============================================================================
+ * 4. ТЕСТЫ ДЛЯ MUTABLE LIST SEQUENCE
+ *============================================================================*/
+
+void TestMutableListConcatSub() {
+    MutableListSequence<int> seq1;
+    seq1.Append(1); seq1.Append(2);
+
+    MutableListSequence<int> seq2;
+    seq2.Append(3); seq2.Append(4);
+
+    Sequence<int>* res = seq1.Concat(seq2);
+    assert(res->GetLength() == 4);
+    assert(res->Get(2) == 3);
+
+    Sequence<int>* sub = res->GetSubSequence(1, 2);
+    assert(sub->GetLength() == 2);
+    assert(sub->Get(0) == 2);
+    assert(sub->Get(1) == 3);
+
+    delete res;
+    delete sub;
+    std::cout << "[OK] MutableList: Concat & Subsequence" << std::endl;
+}
+
+/*============================================================================
+ * 5. ТЕСТЫ ДЛЯ OPTION (TRYGET)
+ *============================================================================*/
+
+void TestSequenceOptions() {
+    MutableArraySequence<int> seq;
+
+    // Тест пустого состояния
+    Option<int> opt1 = seq.TryGetFirst();
+    assert(opt1.HasValue() == false);
+
+    seq.Append(100);
+    seq.Append(200);
+
+    // Тест успешного получения
+    Option<int> opt2 = seq.TryGetFirst();
+    assert(opt2.HasValue() == true);
+    assert(opt2.GetValue() == 100);
+
+    Option<int> opt3 = seq.TryGetLast();
+    assert(opt3.GetValue() == 200);
+
+    // Тест индекса
+    Option<int> opt4 = seq.TryGet(1);
+    assert(opt4.GetValue() == 200);
+
+    Option<int> opt5 = seq.TryGet(10); // Некорректный индекс
+    assert(opt5.HasValue() == false);
+
+    std::cout << "[OK] Sequence: Option (TryGet) Tests" << std::endl;
+}
+
+/*============================================================================
+ * ИТОГОВАЯ ФУНКЦИЯ ЗАПУСКА ВСЕХ ТЕСТОВ
+ *============================================================================*/
+
+void RunAllTests() {
+    try {
+        std::cout << "\n=== STARTING ALL TESTS ===\n" << std::endl;
+
+        // Тесты Immutable Array
+        TestImmutableArrayAppend();
+        TestImmutableArrayPrepend();
+        TestImmutableArrayInsertAt();
+        TestImmutableArrayRemoveAt();
+
+        std::cout << "--------------------------" << std::endl;
+
+        // Тесты Mutable Array
+        TestMutableArrayOperations();
+
+        std::cout << "--------------------------" << std::endl;
+
+        // Тесты Immutable List
+        TestImmutableListFunctional();
+
+        std::cout << "--------------------------" << std::endl;
+
+        // Тесты Mutable List
+        TestMutableListConcatSub();
+
+        std::cout << "--------------------------" << std::endl;
+
+        // Тесты Option
+        TestSequenceOptions();
+
+        std::cout << "\n=== ALL TESTS PASSED SUCCESSFULLY! ===\n" << std::endl;
+
+    } catch (const std::exception& e) {
+        std::cerr << "\n!!! TEST FAILED !!!" << std::endl;
+        std::cerr << "Reason: " << e.what() << std::endl;
+        exit(1);
     }
-    catch (const std::logic_error&)
-    {
-        caught_error = true;
-    }
-    assert(caught_error == true);
-
-    // Тест 2: Option с реальным значением (Some)
-    Option<int> valOpt(42);
-    assert(valOpt.HasValue() == true);
-    assert(valOpt.GetValue() == 42);
-
-    // Тест 3: Try-методы на последовательности
-    int data[] = {100, 200, 300};
-    MutableArraySequence<int> seq(data, 3);
-
-    // Корректный индекс
-    Option<int> validGet = seq.try_get(1);
-    assert(validGet.HasValue() == true);
-    assert(validGet.GetValue() == 200);
-
-    // Выход за границы (вместо падения программы возвращает пустой Option)
-    Option<int> invalidGet = seq.try_get(10);
-    assert(invalidGet.HasValue() == false);
-
-    std::cout << "[OK] Option & Try-semantics tests passed.\n";
 }
-
-
-
-// ==========================================
-// 3. ТЕСТЫ MUTABLE (ИЗМЕНЯЕМОСТИ)
-// ==========================================
-inline void test_mutable_sequence()
-{
-    int data[] = {1, 2, 3};
-    Sequence<int>* mutSeq = new MutableArraySequence<int>(data, 3);
-
-    // Добавляем элемент
-    Sequence<int>* resultSeq = mutSeq->append(4);
-
-    // ПРОВЕРКА 1: Указатели ДОЛЖНЫ совпадать (это один и тот же объект)
-    assert(resultSeq == mutSeq);
-
-    // ПРОВЕРКА 2: Исходный объект ДОЛЖЕН измениться
-    assert(mutSeq->get_length() == 4);
-    assert(mutSeq->get(3) == 4);
-
-    delete mutSeq;
-    std::cout << "[OK] Mutable Sequence tests passed.\n";
-}
-
-
-
-// ==========================================
-// 4. ТЕСТЫ IMMUTABLE (НЕИЗМЕНЯЕМОСТИ)
-// ==========================================
-inline void test_immutable_sequence()
-{
-    int data[] = {1, 2, 3};
-    Sequence<int>* immutSeq = new ImmutableArraySequence<int>(data, 3);
-
-    // Добавляем элемент
-    Sequence<int>* resultSeq = immutSeq->append(4);
-
-    // ПРОВЕРКА 1: Указатели ДОЛЖНЫ отличаться (создана копия)
-    assert(resultSeq != immutSeq);
-
-    // ПРОВЕРКА 2: Исходный объект НЕ ДОЛЖЕН измениться
-    assert(immutSeq->get_length() == 3);
-
-    // ПРОВЕРКА 3: Новый объект ДОЛЖЕН содержать изменения
-    assert(resultSeq->get_length() == 4);
-    assert(resultSeq->get(3) == 4);
-
-    // Очищаем оба объекта
-    delete immutSeq;
-    delete resultSeq;
-
-    std::cout << "[OK] Immutable Sequence tests passed.\n";
-}
-
-
-
-// ==========================================
-// 5. ТЕСТЫ АЛГОРИТМОВ (MAP / WHERE / REDUCE)
-// ==========================================
-inline void test_algorithms()
-{
-    int data[] = {1, 2, 3, 4, 5};
-    MutableArraySequence<int> seq(data, 5);
-
-    // Map
-    Sequence<int>* mapped = seq.map(test_multiply);
-    assert(mapped->get(0) == 2);
-    assert(mapped->get(4) == 10);
-    delete mapped;
-
-    // Where
-    Sequence<int>* filtered = seq.where(test_is_even);
-    assert(filtered->get_length() == 2);
-    assert(filtered->get(0) == 2);
-    assert(filtered->get(1) == 4);
-    delete filtered;
-
-    // Reduce
-    int sum = seq.reduce(test_sum, 0);
-    assert(sum == 15);
-
-    std::cout << "[OK] Algorithms (Map/Where/Reduce) tests passed.\n";
-}
-
-
-
-// ==========================================
-// ГЛАВНЫЙ ЗАПУСК ВСЕХ ТЕСТОВ
-// ==========================================
-inline void run_all_tests()
-{
-    std::cout << "=== ЗАПУСК МОДУЛЬНЫХ ТЕСТОВ ===\n";
-
-    test_dynamic_array();
-    test_option();
-    test_mutable_sequence();
-    test_immutable_sequence();
-    test_algorithms();
-
-    std::cout << "=== ВСЕ ТЕСТЫ ПРОЙДЕНЫ УСПЕШНО ===\n";
-}
-
-#endif // LABA2_TESTS_H

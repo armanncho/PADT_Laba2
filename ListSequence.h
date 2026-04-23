@@ -1,33 +1,48 @@
 #ifndef LABA2_LISTSEQUENCE_H
 #define LABA2_LISTSEQUENCE_H
 
-#include "sequence.h"
-#include "linkedList.h"
+#include "Sequence.h"
+#include "LinkedList.h"
 #include <stdexcept>
 
+template<class T>
+class ListEnumerator : public IEnumerator<T> {
+private:
+    const LinkedList<T>* source;
+    int currentIndex;
+
+public:
+    ListEnumerator(const LinkedList<T>* list) : source(list), currentIndex(-1) {}
+
+    bool has_more_elements()  override {
+        return source && (currentIndex + 1 < source->GetLength());
+    }
+
+    const T& next() override {
+        if (!has_more_elements()) throw std::out_of_range("No more elements");
+        return source->Get(++currentIndex);
+    }
+};
 template <class T>
 class ListSequence : public Sequence<T> {
 private:
     LinkedList<T>* items;
 
 public:
-    // Конструкторы и деструктор
     ListSequence();
     ListSequence(T* items_arr, int count);
     ListSequence(const ListSequence<T>& other);
     ~ListSequence() override;
 
-    // Служебные методы интерфейса Sequence
     Sequence<T>* Instance() override;
     Sequence<T>* CreateEmptySequence() const override;
+    IEnumerator<T>* GetEnumerator() const override;
 
-    // Декомпозиция
     const T& GetFirst() const override;
     const T& GetLast() const override;
     const T& Get(int index) const override;
     int GetLength() const override;
 
-    // Внутренние операции
     void AppendInternal(const T& item) override;
     void PrependInternal(const T& item) override;
     void InsertAtInternal(const T& item, int index) override;
@@ -64,6 +79,12 @@ Sequence<T>* ListSequence<T>::Instance() {
 template <class T>
 Sequence<T>* ListSequence<T>::CreateEmptySequence() const {
     return new ListSequence<T>();
+}
+
+// РЕАЛИЗАЦИЯ ИТЕРАТОРА
+template <class T>
+IEnumerator<T>* ListSequence<T>::GetEnumerator() const {
+    return new ListEnumerator<T>(this->items);
 }
 
 template <class T>
@@ -103,8 +124,7 @@ void ListSequence<T>::InsertAtInternal(const T& item, int index) {
 
 template <class T>
 void ListSequence<T>::RemoveAtInternal(int index) {
-
-    throw std::logic_error("RemoveAt requires implementation in LinkedList");
+    items->RemoveAt(index);
 }
 
 #endif // LABA2_LISTSEQUENCE_H

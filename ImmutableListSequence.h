@@ -2,7 +2,7 @@
 #define LAB2_IMMUTABLELISTSEQUENCE_H
 
 
-#include "listSequence.h"
+#include "ListSequence.h"
 
 template<class T>
 class ImmutableListSequence : public  ListSequence<T>{
@@ -12,8 +12,8 @@ public:
     ImmutableListSequence();
     ImmutableListSequence(const ImmutableListSequence &other);
 
-    Sequence<T>* instance() override;
-    Sequence<T>* create_empty_sequence() const override;
+    Sequence<T>* Instance() override;
+    Sequence<T>* CreateEmptySequence() const override;
 
 };
 
@@ -30,12 +30,12 @@ ImmutableListSequence<T>::ImmutableListSequence(const ImmutableListSequence &oth
         : ListSequence<T>(other) {}
 
 template<class T>
-Sequence<T>* ImmutableListSequence<T>::instance() {
+Sequence<T>* ImmutableListSequence<T>::Instance() {
     return new ImmutableListSequence<T>(*this);
 }
 
 template<class T>
-Sequence<T> *ImmutableListSequence<T>::create_empty_sequence() const {
+Sequence<T> *ImmutableListSequence<T>::CreateEmptySequence() const {
     return new ImmutableListSequence<T>();
 }
 

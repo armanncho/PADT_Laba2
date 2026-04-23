@@ -1,268 +1,228 @@
 #ifndef LABA2_SEQUENCE_H
 #define LABA2_SEQUENCE_H
 
-#include "i_enumerable.h"
+#include "I_enumerable.h"
+#include "Option.h"
 #include <stdexcept>
 #include <ostream>
-#include "option.h"
 
 template <class T>
-class Sequence : public IEnumerable<T>{
-
+class Sequence : public IEnumerable<T> {
 public:
-
-    // деструкторы
+    // Деструктор
     virtual ~Sequence() = default;
 
-    virtual IEnumerator<T>* get_enumerator() const = 0;
+    // Чисто виртуальные методы
+    virtual IEnumerator<T>* GetEnumerator() const = 0;
+    virtual Sequence<T>* Instance() = 0;
+    virtual Sequence<T>* CreateEmptySequence() const = 0;
 
-    virtual Sequence<T>* instance() = 0;
-    virtual Sequence<T>* create_empty_sequence() const = 0;
+    // Геттеры
+    virtual const T& GetFirst() const = 0;
+    virtual const T& GetLast() const = 0;
+    virtual const T& Get(int index) const = 0;
+    virtual int GetLength() const = 0;
 
-    // геттеры
-    virtual const T& get_first() const = 0;
-    virtual const T& get_last() const = 0;
-    virtual const T& get(int index) const = 0;
+    // Options (Безопасные геттеры)
+    Option<T> TryGetFirst() const;
+    Option<T> TryGetLast() const;
+    Option<T> TryGet(int index) const;
 
-    virtual int get_length() const = 0;
+    // Основные операции
+    Sequence<T>* Append(const T& item);
+    Sequence<T>* Prepend(const T& item);
+    Sequence<T>* InsertAt(const T& item, int index);
+    Sequence<T>* RemoveAt(int index);
 
-    // Options Try-functions
-    Option<T> try_get_first() const;
-    Option<T> try_get_last() const;
-    Option<T> try_get(int index) const;
+    Sequence<T>* GetSubSequence(int startIndex, int endIndex);
+    Sequence<T>* Concat(const Sequence<T>& other);
 
-    // main functions
-    Sequence<T>* append(const T& item);
-    Sequence<T>* prepend(const T& item);
-    Sequence<T>* insert_at(const T& item, int index);
-    Sequence<T>* remove_at(int index);
+    // Функциональные методы
+    Sequence<T>* Map(T (*func)(const T&));
+    Sequence<T>* Where(bool (*pred)(const T&));
+    T Reduce(T (*func)(const T&, const T&), const T& init_value);
 
-    Sequence<T>* get_sub_sequence(int startIndex, int endIndex);
-    Sequence<T>* concat(const Sequence<T> &list);
-
-    // Map-Reduse functions
-    Sequence<T>* map(T(*func)(const T&));
-    Sequence<T>* where(bool(*pred)(const T&));
-    T reduce(T(*func)(const T&, const T&), const T& init_value);
-
-    // operators overload
+    // Перегрузка операторов
     const T& operator[](int index) const;
-    bool operator==(const Sequence<T> &other) const;
-    Sequence<T>* operator+(const Sequence<T> &other) const;
+    bool operator==(const Sequence<T>& other) const;
+    Sequence<T>* operator+(const Sequence<T>& other) const;
 
 protected:
-
-    // internal functions
-    virtual void append_internal(const T& item) = 0;
-    virtual void prepend_internal(const T& item) = 0;
-    virtual void insert_at_internal(const T& item, int index) = 0;
-    virtual void remove_at_internal(int index) = 0;
-
+    // Внутренние методы
+    virtual void AppendInternal(const T& item) = 0;
+    virtual void PrependInternal(const T& item) = 0;
+    virtual void InsertAtInternal(const T& item, int index) = 0;
+    virtual void RemoveAtInternal(int index) = 0;
 };
 
-template<class T>
-Sequence<T>* Sequence<T>::append(const T &item) {
-    Sequence<T> *inst = instance();
-    inst->append_internal(item);
+/*============ РЕАЛИЗАЦИЯ МЕТОДОВ ============*/
 
+template <class T>
+Sequence<T>* Sequence<T>::Append(const T& item) {
+    Sequence<T>* inst = Instance();
+    inst->AppendInternal(item);
     return inst;
 }
 
-template<class T>
-Sequence<T>* Sequence<T>::prepend(const T& item) {
-    Sequence<T> *inst = instance();
-    inst->prepend_internal(item);
-
+template <class T>
+Sequence<T>* Sequence<T>::Prepend(const T& item) {
+    Sequence<T>* inst = Instance();
+    inst->PrependInternal(item);
     return inst;
 }
 
-template<class T>
-Sequence<T>* Sequence<T>::insert_at(const T& item, int index) {
-    Sequence<T> *inst = instance();
-    inst->insert_at_internal(item, index);
-
+template <class T>
+Sequence<T>* Sequence<T>::InsertAt(const T& item, int index) {
+    Sequence<T>* inst = Instance();
+    inst->InsertAtInternal(item, index);
     return inst;
 }
 
-template<class T>
-Sequence<T>* Sequence<T>::remove_at(int index) {
-
-    if (index < 0 || index >= get_length())
+template <class T>
+Sequence<T>* Sequence<T>::RemoveAt(int index) {
+    if (index < 0 || index >= GetLength())
         throw std::out_of_range("Index out of range");
 
-    Sequence<T>* inst = instance();
-    inst->remove_at_internal(index);
-
+    Sequence<T>* inst = Instance();
+    inst->RemoveAtInternal(index);
     return inst;
 }
 
-template<class T>
-Sequence<T>* Sequence<T>::concat(const Sequence<T> &list) {
+template <class T>
+Sequence<T>* Sequence<T>::Concat(const Sequence<T>& other) {
+    Sequence<T>* result = this->CreateEmptySequence();
 
-    Sequence<T> *concat = this->create_empty_sequence();
-
-    auto it1 = this->get_enumerator();
-
+    auto it1 = this->GetEnumerator();
     while (it1->has_more_elements())
-        concat->append_internal(it1->next());
-
+        result->AppendInternal(it1->next());
     delete it1;
 
-    auto it2 = list.get_enumerator();
-
+    auto it2 = other.GetEnumerator();
     while (it2->has_more_elements())
-        concat->append_internal(it2->next());
-
+        result->AppendInternal(it2->next());
     delete it2;
 
-    return concat;
+    return result;
 }
 
-template<class T>
-Sequence<T>* Sequence<T>::get_sub_sequence(int startIndex, int endIndex) {
-    int length = this->get_length();
-
+template <class T>
+Sequence<T>* Sequence<T>::GetSubSequence(int startIndex, int endIndex) {
+    int length = this->GetLength();
     if (startIndex < 0 || startIndex >= length || endIndex < 0 || endIndex >= length || startIndex > endIndex)
         throw std::out_of_range("Index out of range");
 
-    Sequence<T> *subSequence = this->create_empty_sequence();
-
-    auto it = this->get_enumerator();
+    Sequence<T>* subSequence = this->CreateEmptySequence();
+    auto it = this->GetEnumerator();
     int index = 0;
 
     while (it->has_more_elements()) {
         const T& value = it->next();
-
         if (index >= startIndex && index <= endIndex)
-            subSequence->append_internal(value);
-
+            subSequence->AppendInternal(value);
         index++;
     }
-
     delete it;
     return subSequence;
 }
 
-template<class T>
-Sequence<T>* Sequence<T>::map(T (*func)(const T&)) {
-    Sequence<T> *result = this->create_empty_sequence();
-
-    auto it = this->get_enumerator();
+template <class T>
+Sequence<T>* Sequence<T>::Map(T (*func)(const T&)) {
+    Sequence<T>* result = this->CreateEmptySequence();
+    auto it = this->GetEnumerator();
     while (it->has_more_elements())
-        result->append_internal(func(it->next()));
-
+        result->AppendInternal(func(it->next()));
     delete it;
     return result;
 }
 
-template<class T>
-Sequence<T>* Sequence<T>::where(bool (*pred)(const T&)) {
-    Sequence<T> *result = this->create_empty_sequence();
-
-    auto it = this->get_enumerator();
-
+template <class T>
+Sequence<T>* Sequence<T>::Where(bool (*pred)(const T&)) {
+    Sequence<T>* result = this->CreateEmptySequence();
+    auto it = this->GetEnumerator();
     while (it->has_more_elements()) {
         const T& value = it->next();
         if (pred(value))
-            result->append_internal(value);
+            result->AppendInternal(value);
     }
-
     delete it;
     return result;
 }
 
-template<class T>
-T Sequence<T>::reduce(T (*func)(const T&, const T&), const T& init_value) {
-    T value = init_value;
-
-    auto it = this->get_enumerator();
-
+template <class T>
+T Sequence<T>::Reduce(T (*func)(const T&, const T&), const T& init_value) {
+    T res = init_value;
+    auto it = this->GetEnumerator();
     while (it->has_more_elements())
-        value = func(value, it->next());
-
+        res = func(res, it->next());
     delete it;
-    return value;
+    return res;
 }
 
-template<class T>
+template <class T>
 const T& Sequence<T>::operator[](int index) const {
-    return this->get(index);
+    return this->Get(index);
 }
 
-template<class T>
-bool Sequence<T>::operator==(const Sequence<T> &other) const {
-    if (this->get_length() != other.get_length())
+template <class T>
+bool Sequence<T>::operator==(const Sequence<T>& other) const {
+    if (this->GetLength() != other.GetLength())
         return false;
-
     if (this == &other)
         return true;
 
-    auto it1 = this->get_enumerator();
-    auto it2 = other.get_enumerator();
+    auto it1 = this->GetEnumerator();
+    auto it2 = other.GetEnumerator();
 
     while (it1->has_more_elements() && it2->has_more_elements()) {
         if (it1->next() != it2->next()) {
             delete it1;
             delete it2;
-
             return false;
         }
     }
-
     delete it1;
     delete it2;
-
     return true;
 }
 
-template<class T>
-Sequence<T> *Sequence<T>::operator+(const Sequence<T> &other) const{
-    return this->concat(other);
+template <class T>
+Sequence<T>* Sequence<T>::operator+(const Sequence<T>& other) const {
+    return this->Concat(other);
 }
 
-template<class T>
-std::ostream& operator<<(std::ostream &os, const Sequence<T> &seq) {
-    auto it = seq.get_enumerator();
-
+// Вывод в поток
+template <class T>
+std::ostream& operator<<(std::ostream& os, const Sequence<T>& seq) {
+    auto it = seq.GetEnumerator();
     os << "[";
-
     while (it->has_more_elements()) {
         os << it->next();
-
         if (it->has_more_elements())
             os << ", ";
     }
-
     os << "]";
-
     delete it;
     return os;
 }
 
-// option's functions
-template<class T>
-Option<T> Sequence<T>::try_get_first() const{
-    if (this->get_length() == 0)
-        return Option<T>();
-
-    return Option<T>(this->get_first());
+// Option-функции
+template <class T>
+Option<T> Sequence<T>::TryGetFirst() const {
+    if (this->GetLength() == 0) return Option<T>();
+    return Option<T>(this->GetFirst());
 }
 
-template<class T>
-Option<T> Sequence<T>::try_get_last() const{
-    if (this->get_length() == 0)
-        return Option<T>();
-
-    return Option<T>(this->get_last());
+template <class T>
+Option<T> Sequence<T>::TryGetLast() const {
+    if (this->GetLength() == 0) return Option<T>();
+    return Option<T>(this->GetLast());
 }
 
-template<class T>
-Option<T> Sequence<T>::try_get(int index) const{
-    if (index > this->get_length() || index < 0)
+template <class T>
+Option<T> Sequence<T>::TryGet(int index) const {
+    if (index >= this->GetLength() || index < 0)
         return Option<T>();
-
-    return Option<T>(this->get(index));
+    return Option<T>(this->Get(index));
 }
-
 
 #endif //LABA2_SEQUENCE_H

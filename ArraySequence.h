@@ -5,29 +5,45 @@
 #include "DynamicArray.h"
 #include <stdexcept>
 
+template<class T>
+class ArrayEnumerator : public IEnumerator<T> {
+private:
+    const DynamicArray<T>* source;
+    int currentIndex;
+public:
+    ArrayEnumerator(const DynamicArray<T>* array) : source(array), currentIndex(-1) {}
+
+    bool has_more_elements() override {
+        if (!source) return false;
+        return currentIndex + 1 < source->GetSize();
+    }
+
+    const T& next() override {
+        if (!has_more_elements()) throw std::out_of_range("No more elements");
+        return source->Get(++currentIndex);
+    }
+};
+
 template <class T>
 class ArraySequence : public Sequence<T> {
 private:
     DynamicArray<T>* items;
 
 public:
-    // Конструкторы и деструктор
     ArraySequence();
     ArraySequence(const T* items_arr, int count);
     ArraySequence(const ArraySequence<T>& other);
     ~ArraySequence() override;
 
-    // Служебные методы интерфейса Sequence
     Sequence<T>* Instance() override;
     Sequence<T>* CreateEmptySequence() const override;
+    IEnumerator<T>* GetEnumerator() const override;
 
-    // Декомпозиция
     const T& GetFirst() const override;
     const T& GetLast() const override;
     const T& Get(int index) const override;
     int GetLength() const override;
 
-    // Внутренние операции
     void AppendInternal(const T& item) override;
     void PrependInternal(const T& item) override;
     void InsertAtInternal(const T& item, int index) override;
@@ -66,6 +82,12 @@ Sequence<T>* ArraySequence<T>::CreateEmptySequence() const {
     return new ArraySequence<T>();
 }
 
+// РЕАЛИЗАЦИЯ ИТЕРАТОРА
+template <class T>
+IEnumerator<T>* ArraySequence<T>::GetEnumerator() const {
+    return new ArrayEnumerator<T>(this->items);
+}
+
 template <class T>
 const T& ArraySequence<T>::GetFirst() const {
     if (items->GetSize() == 0) throw std::out_of_range("Sequence is empty");
@@ -74,8 +96,9 @@ const T& ArraySequence<T>::GetFirst() const {
 
 template <class T>
 const T& ArraySequence<T>::GetLast() const {
-    if (items->GetSize() == 0) throw std::out_of_range("Sequence is empty");
-    return items->Get(items->GetSize() - 1);
+    int length = items->GetSize();
+    if (length == 0) throw std::out_of_range("Sequence is empty");
+    return items->Get(length - 1);
 }
 
 template <class T>
@@ -108,8 +131,7 @@ void ArraySequence<T>::PrependInternal(const T& item) {
 template <class T>
 void ArraySequence<T>::InsertAtInternal(const T& item, int index) {
     int oldSize = items->GetSize();
-    if (index < 0 || index > oldSize) throw std::out_of_range("IndexOutOfRange");
-
+    if (index < 0 || index > oldSize) throw std::out_of_range("Index out of range");
     items->Resize(oldSize + 1);
     for (int i = oldSize; i > index; --i) {
         items->Set(items->Get(i - 1), i);
@@ -120,12 +142,11 @@ void ArraySequence<T>::InsertAtInternal(const T& item, int index) {
 template <class T>
 void ArraySequence<T>::RemoveAtInternal(int index) {
     int oldSize = items->GetSize();
-    if (index < 0 || index >= oldSize) throw std::out_of_range("IndexOutOfRange");
-
+    if (index < 0 || index >= oldSize) throw std::out_of_range("Index out of range");
     for (int i = index; i < oldSize - 1; ++i) {
         items->Set(items->Get(i + 1), i);
     }
-    items->Resize(oldSize - 1); // увеличение контейнеров порциями, не должно происходить огромное количество resize, должен оставаться запас
+    items->Resize(oldSize - 1);
 }
 
 #endif // LABA2_ARRAYSEQUENCE_H

@@ -1,6 +1,6 @@
 #ifndef LAB2_MUTABLELISTSEQUENCE_H
 
-#include "listSequence.h"
+#include "ListSequence.h"
 
 template<class T>
 class MutableListSequence : public ListSequence<T> {
@@ -11,8 +11,8 @@ public:
     MutableListSequence();
     MutableListSequence(const MutableListSequence &other);
 
-    Sequence<T>* instance() override;
-    Sequence<T>* create_empty_sequence() const override;
+    Sequence<T>* Instance() override;
+    Sequence<T>* CreateEmptySequence() const override;
 };
 
 template<class T>
@@ -28,12 +28,12 @@ MutableListSequence<T>::MutableListSequence(const MutableListSequence &other)
         : ListSequence<T>(other) {}
 
 template<class T>
-Sequence<T>* MutableListSequence<T>::instance() {
+Sequence<T>* MutableListSequence<T>::Instance() {
     return this;
 }
 
 template<class T>
-Sequence<T>* MutableListSequence<T>::create_empty_sequence() const{
+Sequence<T>* MutableListSequence<T>::CreateEmptySequence() const{
     return new MutableListSequence<T>();
 }
 

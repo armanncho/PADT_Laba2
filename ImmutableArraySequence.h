@@ -1,7 +1,7 @@
 #ifndef LAB2_IMMUTABLEARRAYSEQUENCE_H
 #define LAB2_IMMUTABLEARRAYSEQUENCE_H
 
-#include "arraySequence.h"
+#include "ArraySequence.h"
 
 template <class T>
 class ImmutableArraySequence : public ArraySequence<T> {
@@ -12,8 +12,8 @@ public:
     ImmutableArraySequence();
     ImmutableArraySequence(const ImmutableArraySequence<T> &other);
 
-    Sequence<T>* instance() override;
-    Sequence<T>* create_empty_sequence() const override;
+    Sequence<T>* Instance() override;
+    Sequence<T>* CreateEmptySequence() const override;
 };
 
 template<class T>
@@ -29,12 +29,12 @@ ImmutableArraySequence<T>::ImmutableArraySequence(const ImmutableArraySequence<T
         : ArraySequence<T>(other) {}
 
 template<class T>
-Sequence<T>* ImmutableArraySequence<T>::instance() {
+Sequence<T>* ImmutableArraySequence<T>::Instance() {
     return new ImmutableArraySequence<T>(*this);
 }
 
 template<class T>
-Sequence<T>* ImmutableArraySequence<T>::create_empty_sequence() const {
+Sequence<T>* ImmutableArraySequence<T>::CreateEmptySequence() const {
     return new ImmutableArraySequence<T>();
 }
 
