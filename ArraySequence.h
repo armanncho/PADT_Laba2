@@ -5,24 +5,6 @@
 #include "DynamicArray.h"
 #include <stdexcept>
 
-template<class T>
-class ArrayEnumerator : public IEnumerator<T> {
-private:
-    const DynamicArray<T>* source;
-    int currentIndex;
-public:
-    ArrayEnumerator(const DynamicArray<T>* array) : source(array), currentIndex(-1) {}
-
-    bool has_more_elements() override {
-        if (!source) return false;
-        return currentIndex + 1 < source->GetSize();
-    }
-
-    const T& next() override {
-        if (!has_more_elements()) throw std::out_of_range("No more elements");
-        return source->Get(++currentIndex);
-    }
-};
 
 template <class T>
 class ArraySequence : public Sequence<T> {
@@ -82,11 +64,11 @@ Sequence<T>* ArraySequence<T>::CreateEmptySequence() const {
     return new ArraySequence<T>();
 }
 
-// РЕАЛИЗАЦИЯ ИТЕРАТОРА
 template <class T>
 IEnumerator<T>* ArraySequence<T>::GetEnumerator() const {
     return new ArrayEnumerator<T>(this->items);
 }
+
 
 template <class T>
 const T& ArraySequence<T>::GetFirst() const {

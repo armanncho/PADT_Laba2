@@ -5,25 +5,8 @@
 #include "LinkedList.h"
 #include <stdexcept>
 
+
 template<class T>
-class ListEnumerator : public IEnumerator<T> {
-private:
-    const LinkedList<T>* source;
-    int currentIndex;
-
-public:
-    ListEnumerator(const LinkedList<T>* list) : source(list), currentIndex(-1) {}
-
-    bool has_more_elements()  override {
-        return source && (currentIndex + 1 < source->GetLength());
-    }
-
-    const T& next() override {
-        if (!has_more_elements()) throw std::out_of_range("No more elements");
-        return source->Get(++currentIndex);
-    }
-};
-template <class T>
 class ListSequence : public Sequence<T> {
 private:
     LinkedList<T>* items;
@@ -81,7 +64,6 @@ Sequence<T>* ListSequence<T>::CreateEmptySequence() const {
     return new ListSequence<T>();
 }
 
-// РЕАЛИЗАЦИЯ ИТЕРАТОРА
 template <class T>
 IEnumerator<T>* ListSequence<T>::GetEnumerator() const {
     return new ListEnumerator<T>(this->items);

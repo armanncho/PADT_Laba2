@@ -8,7 +8,7 @@ class IEnumerator {
 public:
     virtual ~IEnumerator() = default;
 
-    virtual bool has_more_elements()  = 0;
+    virtual bool has_more_elements() const = 0;
 
     virtual const T& next() = 0;
 

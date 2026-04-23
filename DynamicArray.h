@@ -2,7 +2,30 @@
 #define LABA2_DYNAMICARRAY_H
 
 #include <stdexcept>
+#include "I_enumerator.h"
 
+template <class T> class DynamicArray;
+
+template<class T>
+class ArrayEnumerator : public IEnumerator<T> {
+private:
+    T* current;
+    T* end;
+public:
+    ArrayEnumerator(const DynamicArray<T>* arr);
+
+    bool has_more_elements() const override {
+        return current != end;
+    }
+
+    const T& next() override {
+        if (!has_more_elements())
+            throw std::out_of_range("ArrayEnumerator::next");
+        return *current++;
+    }
+};
+
+// 3. Основной класс DynamicArray
 template <class T>
 class DynamicArray {
 private:
@@ -11,100 +34,85 @@ private:
     int capacity;
 
 public:
-    // Конструкторы
+    // Дружественный класс, чтобы итератор видел data напрямую
+    friend class ArrayEnumerator<T>;
+
+    // Constructors
     DynamicArray(const T *items, int count);
     DynamicArray(int size);
     DynamicArray(const DynamicArray<T>& dynamicArray);
 
-    // Деструктор
+    // Destructor
     ~DynamicArray();
 
-    // Декомпозиция
+    // Decomposition (Исправлены имена на GetSize и Get для совместимости)
     const T& Get(int index) const;
     int GetSize() const;
 
-    // Операции
+    // Operations
     void Set(const T& value, int index);
     void Resize(int newSize);
 };
-// КОНСТРУКТОРЫ (создание объекта)
 
-// копирование элементов из переданного массива
+/*============ РЕАЛИЗАЦИЯ МЕТОДОВ ============*/
+
+// Реализация конструктора итератора (вынесена вниз, чтобы видеть поля DynamicArray)
+template<class T>
+ArrayEnumerator<T>::ArrayEnumerator(const DynamicArray<T>* arr) {
+    this->current = arr->data;
+    this->end = arr->data + arr->size;
+}
+
 template<class T>
 DynamicArray<T>::DynamicArray(const T *items, int count) {
-    if (count < 0)
-        throw std::invalid_argument("Количество элементов не может быть отрицательным");
-
-    size = count;
-
-    if (count > 0)
-        capacity = count; // ровно столько памяти, сколько нужно
-    else
-        capacity = 1; // чтобы массив не оставался с нулевым указателем
-
+    if (count < 0) throw std::invalid_argument("Size cannot be negative");
+    this->size = count;
+    this->capacity = (count > 0) ? count : 1;
     data = new T[capacity];
-
-    for (int i = 0; i < size; i++)
-        data[i] = items[i];
+    for (int i = 0; i < size; i++) data[i] = items[i];
 }
-// создает массив заданной длины
+
 template<class T>
 DynamicArray<T>::DynamicArray(int size) {
-    if (size < 0)
-        throw std::invalid_argument("Размер не может быть отрицательным");
-
+    if (size < 0) throw std::invalid_argument("Size cannot be negative");
     this->size = size;
-
-    if (size > 0)
-        capacity = size;
-    else
-        capacity = 1;
-
+    this->capacity = (size > 0) ? size : 1;
     data = new T[capacity];
 }
 
 template<class T>
 DynamicArray<T>::DynamicArray(const DynamicArray<T>& dynamicArray) {
     this->size = dynamicArray.size;
-    capacity = dynamicArray.capacity;
-
+    this->capacity = dynamicArray.capacity;
     data = new T[capacity];
-
-    for (int i = 0; i < size; i++)
-        data[i] = dynamicArray.data[i];
+    for (int i = 0; i < size; i++) data[i] = dynamicArray.data[i];
 }
 
 template<class T>
 DynamicArray<T>::~DynamicArray() {
     delete[] data;
 }
-// декомпозиция
 
-// получить элемент по индексу
 template<class T>
-const T& DynamicArray<T>::Get(int index) const{
-    if (index < 0 || index >= size)
-        throw std::out_of_range("Индекс выходит за границы массива");
+const T& DynamicArray<T>::Get(int index) const {
+    if (index < 0 || index >= size) throw std::out_of_range("Index out of range");
     return data[index];
 }
 
-
 template<class T>
-int DynamicArray<T>::GetSize() const{
+int DynamicArray<T>::GetSize() const {
     return size;
 }
-// ОПЕРАЦИИ
+
 template<class T>
 void DynamicArray<T>::Set(const T& value, int index) {
-    if (index < 0 || index >= size)
-        throw std::out_of_range("Индекс выходит за границы массива");
+    if (index < 0 || index >= size) throw std::out_of_range("Index out of range");
     data[index] = value;
 }
 
 template<class T>
 void DynamicArray<T>::Resize(int newSize) {
-    if (newSize < 0)
-        throw std::invalid_argument("Новый размер не может быть отрицательным");
+    if (newSize < 0) throw std::invalid_argument("Size cannot be negative");
 
     if (newSize <= capacity) {
         size = newSize;
@@ -112,19 +120,16 @@ void DynamicArray<T>::Resize(int newSize) {
     }
 
     int newCapacity = capacity;
-
-    while (newCapacity < newSize)
-        newCapacity *= 2;
+    if (newCapacity == 0) newCapacity = 1;
+    while (newCapacity < newSize) newCapacity *= 2;
 
     T* newData = new T[newCapacity];
-
-    for (int i = 0; i < size; i++)
-        newData[i] = data[i];
+    for (int i = 0; i < size; i++) newData[i] = data[i];
 
     delete[] data;
     data = newData;
-    size = newSize;
     capacity = newCapacity;
+    size = newSize;
 }
 
 #endif //LABA2_DYNAMICARRAY_H
