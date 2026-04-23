@@ -8,6 +8,8 @@
 #include "MutableListSequence.h"
 #include "Option.h"
 
+
+
 /*============================================================================
  * 1. ТЕСТЫ ДЛЯ IMMUTABLE ARRAY SEQUENCE
  *============================================================================*/
@@ -228,4 +230,8 @@ void RunAllTests() {
         std::cerr << "Reason: " << e.what() << std::endl;
         exit(1);
     }
+}
+int main() {
+    RunAllTests();
+    return 0;
 }
