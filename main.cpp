@@ -1,5 +1,6 @@
 #include <iostream>
 #include "Sequence.h"
+#include "SequenceIO.h"
 #include "MutableArraySequence.h"
 #include "ImmutableArraySequence.h"
 #include "MutableListSequence.h"
@@ -27,6 +28,7 @@ void SequenceMenu(Sequence<int>* seq) {
     int choice = -1;
     while (choice != 0) {
         std::cout << "\n===== CURRENT SEQUENCE =====\n";
+
         std::cout << *seq << " (Length: " << seq->GetLength() << ")\n";
 
         std::cout << "\n===== OPERATIONS =====\n";
@@ -126,7 +128,6 @@ void SequenceMenu(Sequence<int>* seq) {
     delete seq;
 }
 
-// Фабрики создания
 Sequence<int>* CreateArraySequence() {
     std::cout << "\n1. Mutable Array\n2. Immutable Array\nChoice: ";
     return (ReadInt() == 1) ? (Sequence<int>*)new MutableArraySequence<int>()
