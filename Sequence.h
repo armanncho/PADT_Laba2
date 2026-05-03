@@ -4,7 +4,6 @@
 #include "I_enumerable.h"
 #include "Option.h"
 #include <stdexcept>
-#include <ostream>
 
 template <class T>
 class Sequence : public IEnumerable<T> {
@@ -182,21 +181,6 @@ bool Sequence<T>::operator==(const Sequence<T> &other) const {
 template<class T>
 Sequence<T> *Sequence<T>::operator+(const Sequence<T> &other) const {
     return this->Concat(other);
-}
-
-// Вынос реализации оператора вывода
-template<class T>
-std::ostream& operator<<(std::ostream &os, const Sequence<T> &seq) {
-    auto it = seq.GetEnumerator();
-    os << "[";
-    while (it->has_more_elements()) {
-        os << it->next();
-        if (it->has_more_elements())
-            os << ", ";
-    }
-    os << "]";
-    delete it;
-    return os;
 }
 
 /*============ OPTION FUNCTIONS ============*/

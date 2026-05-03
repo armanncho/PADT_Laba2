@@ -20,7 +20,8 @@ set(HEADERS
         MutableListSequence.h
 )
 
-add_executable(lab2 main.cpp ${HEADERS})
+add_executable(lab2 main.cpp ${HEADERS}
+        SequenceIO.h)
 
 
 add_executable(tests tests.cpp ${HEADERS})
